@@ -16,15 +16,14 @@ export const userAPI = {
     form.append('resume', file)
     return api.post('/users/upload-resume', form, { headers: { 'Content-Type': 'multipart/form-data' } })
   },
-  getStudents: (params) => api.get('/users/students', { params }),
 }
 
 export const cohortAPI = {
-  getAll:             ()         => api.get('/cohorts'),
-  getBySlug:          (slug)     => api.get(`/cohorts/${slug}`),
-  getModules:         (cohortId) => api.get(`/cohorts/${cohortId}/modules`),
-  getModuleQuestions: (moduleId) => api.get(`/cohorts/modules/${moduleId}/questions`),
-  submitAssessment:   (moduleId, answers) => api.post(`/cohorts/modules/${moduleId}/submit`, { answers }),
+  getAll:             ()           => api.get('/cohorts'),
+  getModules:         (cohortId)   => api.get(`/cohorts/${cohortId}/modules`),
+  // Assessment (separate from modules)
+  getAssessment:      (subject)    => api.get(`/cohorts/assessment/${subject}?t=${Date.now()}`),
+  submitAssessment:   (subject, answers) => api.post(`/cohorts/assessment/${subject}/submit`, { answers }),
 }
 
 export const questionAPI = {
@@ -39,10 +38,9 @@ export const submissionAPI = {
 }
 
 export const analyticsAPI = {
-  getMyAnalytics:    ()          => api.get('/analytics/me'),
-  getOverview:       ()          => api.get('/analytics/overview'),
-  getCohortAnalytics:(cohortId)  => api.get(`/analytics/cohort/${cohortId}`),
-  getAllStudents:     (params)    => api.get('/analytics/students', { params }),
-  getStudentDetail:  (studentId) => api.get(`/analytics/students/${studentId}`),
-  exportReport:      (params)    => api.get('/analytics/export', { params, responseType: 'blob' }),
+  getMyAnalytics:   ()          => api.get('/analytics/me'),
+  getOverview:      ()          => api.get('/analytics/overview'),
+  getAllStudents:    (params)    => api.get('/analytics/students', { params }),
+  getStudentDetail: (studentId) => api.get(`/analytics/students/${studentId}`),
+  exportReport:     (params)    => api.get('/analytics/export', { params, responseType: 'blob' }),
 }
