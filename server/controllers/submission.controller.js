@@ -196,11 +196,12 @@ const updateSubjectScore = async (userId, subject, isCorrect) => {
   }
 };
 
-// ── HELPER: Update coding stats ───────────────────────────
+// ── HELPER: Update coding stats + DSA score ──────────────
 const updateCodingStats = async (userId, difficulty) => {
   try {
-    const analytics = await Analytics.findOne({ user: userId });
-    if (!analytics) return;
+    const Question = require("../models/Question");
+    let analytics = await Analytics.findOne({ user: userId });
+    if (!analytics) analytics = await Analytics.create({ user: userId });
 
     analytics.totalCodeSubmissions += 1;
     analytics.codePassed           += 1;
@@ -209,6 +210,13 @@ const updateCodingStats = async (userId, difficulty) => {
     if (difficulty === "medium") analytics.mediumPassed += 1;
     if (difficulty === "hard")   analytics.hardPassed   += 1;
 
+    // DSA score = % of total coding problems solved
+    const totalProblems = await Question.countDocuments({ type: "coding", isActive: true });
+    if (totalProblems > 0) {
+      analytics.dsaScore = Math.min(100, Math.round((analytics.codePassed / totalProblems) * 100));
+    }
+
+    analytics.recalculateOverall();
     await analytics.save();
   } catch (err) {
     console.error("Coding stats update error:", err.message);

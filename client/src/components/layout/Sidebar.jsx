@@ -6,14 +6,15 @@ import { useAuthStore } from '../../store/authStore'
 import { authAPI } from '../../api'
 import {
   LayoutDashboard, Code2, BookOpen, User,
-  LogOut, BarChart3, ChevronRight
+  LogOut, BarChart3, ChevronRight, ClipboardList
 } from 'lucide-react'
 
 const studentNav = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/modules',   icon: BookOpen,        label: 'Learning Path' },
-  { to: '/practice',  icon: Code2,           label: 'Practice' },
-  { to: '/profile',   icon: User,            label: 'Profile' },
+  { to: '/dashboard',   icon: LayoutDashboard, label: 'Dashboard'     },
+  { to: '/modules',     icon: BookOpen,        label: 'Learning Path' },
+  { to: '/assessments', icon: ClipboardList,   label: 'Assessments'   },
+  { to: '/practice',    icon: Code2,           label: 'Practice'      },
+  { to: '/profile',     icon: User,            label: 'Profile'       },
 ]
 
 const staffNav = [
