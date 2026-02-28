@@ -11,6 +11,7 @@ import ModulesPage     from './pages/ModulesPage'
 import AssessmentPage  from './pages/AssessmentPage'
 import ProfilePage     from './pages/ProfilePage'
 import StaffDashboard  from './pages/StaffDashboard'
+import ChatbotPage     from './pages/ChatbotPage'   // ← NEW Phase 5
 
 const isStaff = (user) => user?.role === 'staff' || user?.role === 'admin'
 
@@ -70,6 +71,7 @@ export default function App() {
         <Route path="/practice/:id" element={<StudentRoute><CodingPage /></StudentRoute>} />
         <Route path="/modules"      element={<StudentRoute><ModulesPage /></StudentRoute>} />
         <Route path="/assessments"  element={<StudentRoute><AssessmentPage /></StudentRoute>} />
+        <Route path="/chatbot"      element={<StudentRoute><ChatbotPage /></StudentRoute>} />  {/* NEW */}
         <Route path="/profile"      element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
 
         {/* Staff-only routes */}

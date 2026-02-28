@@ -6,7 +6,7 @@ import { useAuthStore } from '../../store/authStore'
 import { authAPI } from '../../api'
 import {
   LayoutDashboard, Code2, BookOpen, User,
-  LogOut, BarChart3, ChevronRight, ClipboardList
+  LogOut, BarChart3, ChevronRight, ClipboardList, Bot
 } from 'lucide-react'
 
 const studentNav = [
@@ -14,12 +14,13 @@ const studentNav = [
   { to: '/modules',     icon: BookOpen,        label: 'Learning Path' },
   { to: '/assessments', icon: ClipboardList,   label: 'Assessments'   },
   { to: '/practice',    icon: Code2,           label: 'Practice'      },
+  { to: '/chatbot',     icon: Bot,             label: 'JD Analyzer', badge: 'AI' },
   { to: '/profile',     icon: User,            label: 'Profile'       },
 ]
 
 const staffNav = [
-  { to: '/staff', icon: BarChart3, label: 'Dashboard' },
-  { to: '/profile', icon: User,   label: 'Profile' },
+  { to: '/staff',   icon: BarChart3, label: 'Dashboard' },
+  { to: '/profile', icon: User,      label: 'Profile' },
 ]
 
 export default function Sidebar() {
@@ -69,7 +70,7 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
-        {nav.map(({ to, icon: Icon, label }) => (
+        {nav.map(({ to, icon: Icon, label, badge }) => (
           <NavLink
             key={to} to={to}
             className={({ isActive }) =>
@@ -83,7 +84,12 @@ export default function Sidebar() {
               <>
                 <Icon size={16} className={isActive ? 'text-blue-400' : ''} />
                 <span className="font-medium">{label}</span>
-                {isActive && <ChevronRight size={14} className="ml-auto text-blue-400" />}
+                {badge && (
+                  <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 bg-blue-600 text-white rounded-full">
+                    {badge}
+                  </span>
+                )}
+                {isActive && !badge && <ChevronRight size={14} className="ml-auto text-blue-400" />}
               </>
             )}
           </NavLink>
