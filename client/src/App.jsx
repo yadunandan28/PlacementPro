@@ -12,6 +12,11 @@ import AssessmentPage  from './pages/AssessmentPage'
 import ProfilePage     from './pages/ProfilePage'
 import StaffDashboard  from './pages/StaffDashboard'
 import ChatbotPage     from './pages/ChatbotPage'   // ← NEW Phase 5
+import MockInterviewPage    from './pages/MockInterviewPage'
+import MyInterviewsPage from './pages/MyInterviewsPage'
+import ScheduleInterviewPage from './pages/ScheduleInterviewPage'
+
+
 
 const isStaff = (user) => user?.role === 'staff' || user?.role === 'admin'
 
@@ -73,9 +78,12 @@ export default function App() {
         <Route path="/assessments"  element={<StudentRoute><AssessmentPage /></StudentRoute>} />
         <Route path="/chatbot"      element={<StudentRoute><ChatbotPage /></StudentRoute>} />  {/* NEW */}
         <Route path="/profile"      element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+        <Route path="/interview/:slotId" element={<StudentRoute><MockInterviewPage /></StudentRoute>} />
+        <Route path="/my-interviews" element={<StudentRoute><MyInterviewsPage /></StudentRoute>} />
 
         {/* Staff-only routes */}
         <Route path="/staff" element={<StaffRoute><StaffDashboard /></StaffRoute>} />
+        <Route path="/staff/interviews"  element={<StaffRoute><ScheduleInterviewPage /></StaffRoute>} />
 
         <Route path="*" element={<HomeRedirect />} />
       </Routes>

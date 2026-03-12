@@ -79,7 +79,7 @@ Example output format:
 
   try {
     const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
+      model:       "llama3-8b-8192",
       messages:    [{ role: "user", content: prompt }],
       temperature: 0.2,
       max_tokens:  300,
@@ -249,7 +249,7 @@ RESPONSE FORMAT RULES:
   let assistantMessage;
   try {
     const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
+      model:       "llama3-8b-8192",
       messages,
       temperature: 0.5,
       max_tokens:  1000,
