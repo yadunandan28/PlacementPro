@@ -1,26 +1,28 @@
 // ============================================================
-//  components/layout/Sidebar.jsx  —  App Navigation Sidebar
+//  components/layout/Sidebar.jsx
 // ============================================================
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { authAPI } from '../../api'
 import {
   LayoutDashboard, Code2, BookOpen, User,
-  LogOut, BarChart3, ChevronRight, ClipboardList, Bot
+  LogOut, BarChart3, ChevronRight, ClipboardList, Bot, Mic
 } from 'lucide-react'
 
 const studentNav = [
-  { to: '/dashboard',   icon: LayoutDashboard, label: 'Dashboard'     },
-  { to: '/modules',     icon: BookOpen,        label: 'Learning Path' },
-  { to: '/assessments', icon: ClipboardList,   label: 'Assessments'   },
-  { to: '/practice',    icon: Code2,           label: 'Practice'      },
-  { to: '/chatbot',     icon: Bot,             label: 'JD Analyzer', badge: 'AI' },
-  { to: '/profile',     icon: User,            label: 'Profile'       },
+  { to: '/dashboard',      icon: LayoutDashboard, label: 'Dashboard'       },
+  { to: '/modules',        icon: BookOpen,        label: 'Learning Path'   },
+  { to: '/assessments',    icon: ClipboardList,   label: 'Assessments'     },
+  { to: '/practice',       icon: Code2,           label: 'Practice'        },
+  { to: '/chatbot',        icon: Bot,             label: 'JD Analyzer',    badge: 'AI' },
+  { to: '/my-interviews',  icon: Mic,             label: 'Mock Interviews', badge: 'NEW' },
+  { to: '/profile',        icon: User,            label: 'Profile'         },
 ]
 
 const staffNav = [
-  { to: '/staff',   icon: BarChart3, label: 'Dashboard' },
-  { to: '/profile', icon: User,      label: 'Profile' },
+  { to: '/staff',            icon: BarChart3, label: 'Dashboard'       },
+  { to: '/staff/interviews', icon: Mic,       label: 'Mock Interviews' },
+  { to: '/profile',          icon: User,      label: 'Profile'         },
 ]
 
 export default function Sidebar() {
