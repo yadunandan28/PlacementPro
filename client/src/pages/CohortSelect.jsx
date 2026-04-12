@@ -56,6 +56,18 @@ export default function CohortSelect() {
           </div>
         )}
 
+        {cohorts.length === 0 && (
+          <div className="mb-8 px-5 py-6 rounded-xl border border-amber-500/20 bg-amber-500/5 text-center text-slate-400 text-sm leading-relaxed max-w-xl mx-auto">
+            <p className="text-amber-200/90 font-medium mb-2">No learning domains available yet</p>
+            <p className="mb-2">
+              These choices are loaded from the server. If the list is empty, no cohorts exist in the database yet—ask an admin to create them, or seed demo data if you are setting up the app.
+            </p>
+            <p className="text-xs text-slate-500 font-mono">
+              Server: npm run seed:cohorts (requires MONGO_URI in server/.env), then refresh.
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           {cohorts.map((cohort) => {
             const isSelected = selected?._id === cohort._id
