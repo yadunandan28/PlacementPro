@@ -13,6 +13,21 @@ services:
       - ./server/.env
     environment:
       - PORT=5000
+      - CAREER_AI_SERVICE_URL=http://career-ai-service:8000
+    depends_on:
+      - career-ai-service
+    restart: unless-stopped
+
+  # ── Career AI Service (Port 8000) ───────────────────────
+  career-ai-service:
+    build:
+      context: ./career-ai-service
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - ENABLE_EMBEDDINGS=false
+      - JOB_DATASET_PATH=data/jobs.csv
     restart: unless-stopped
 
   # ── Interview Microservice (Port 5001) ─────────────────
@@ -41,4 +56,5 @@ services:
     depends_on:
       - server
       - interview-service
+      - career-ai-service
     restart: unless-stopped

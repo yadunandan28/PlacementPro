@@ -1,13 +1,13 @@
 const asyncHandler = require("express-async-handler");
-const cloudinary   = require("cloudinary").v2;
-const pdfParse     = require("pdf-parse");
-const Groq         = require("groq-sdk");
-const JdSession    = require("../models/JdSession");
+const cloudinary = require("cloudinary").v2;
+const pdfParse = require("pdf-parse");
+const Groq = require("groq-sdk");
+const JdSession = require("../models/JdSession");
 
 // ── Cloudinary config ─────────────────────────────────────
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
@@ -30,7 +30,10 @@ function chunkText(text, chunkSize = 800, overlap = 100) {
 
 // Keyword-based retrieval — returns top N most relevant chunks
 function retrieveRelevantChunks(chunks, query, topN = 6) {
-  const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+  const queryWords = query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => w.length > 2);
 
   const scored = chunks.map((chunk, idx) => {
     const lower = chunk.toLowerCase();
@@ -43,14 +46,14 @@ function retrieveRelevantChunks(chunks, query, topN = 6) {
 
   // Always include first chunk (usually has role title + summary)
   const top = scored.sort((a, b) => b.score - a.score).slice(0, topN);
-  const hasFirst = top.some(t => t.idx === 0);
+  const hasFirst = top.some((t) => t.idx === 0);
   if (!hasFirst && scored.length > 0) {
-    top[top.length - 1] = scored.find(s => s.idx === 0);
+    top[top.length - 1] = scored.find((s) => s.idx === 0);
   }
 
   return top
     .sort((a, b) => a.idx - b.idx) // restore original order
-    .map(s => s.chunk);
+    .map((s) => s.chunk);
 }
 
 // ── Extract focus areas (improved prompt) ─────────────────
@@ -79,10 +82,10 @@ Example output format:
 
   try {
     const completion = await groq.chat.completions.create({
-      model:       "llama3-8b-8192",
-      messages:    [{ role: "user", content: prompt }],
+      model: "llama-3.1-8b-instant",
+      messages: [{ role: "user", content: prompt }],
       temperature: 0.2,
-      max_tokens:  300,
+      max_tokens: 300,
     });
 
     const raw = completion.choices[0].message.content.trim();
@@ -96,15 +99,28 @@ Example output format:
     }
 
     // Fallback: split by newlines if model returned a list instead of JSON
-    const lines = raw.split("\n")
-      .map(l => l.replace(/^[\d\.\-\*\s"]+|["]+$/g, "").trim())
-      .filter(l => l.length > 3 && l.length < 80);
+    const lines = raw
+      .split("\n")
+      .map((l) => l.replace(/^[\d\.\-\*\s"]+|["]+$/g, "").trim())
+      .filter((l) => l.length > 3 && l.length < 80);
     if (lines.length >= 3) return lines.slice(0, 7);
 
-    return ["Python & ML Fundamentals", "Data Structures & Algorithms", "LLM & RAG Concepts", "SQL & Databases", "Problem Solving"];
+    return [
+      "Python & ML Fundamentals",
+      "Data Structures & Algorithms",
+      "LLM & RAG Concepts",
+      "SQL & Databases",
+      "Problem Solving",
+    ];
   } catch (err) {
     console.error("Focus area extraction failed:", err.message);
-    return ["Python & ML Fundamentals", "Data Structures & Algorithms", "LLM & RAG Concepts", "SQL & Databases", "Problem Solving"];
+    return [
+      "Python & ML Fundamentals",
+      "Data Structures & Algorithms",
+      "LLM & RAG Concepts",
+      "SQL & Databases",
+      "Problem Solving",
+    ];
   }
 }
 
@@ -113,7 +129,9 @@ Example output format:
 // POST /api/chatbot/upload-jd
 const uploadJD = asyncHandler(async (req, res) => {
   if (!req.file) {
-    return res.status(400).json({ success: false, message: "No PDF file uploaded" });
+    return res
+      .status(400)
+      .json({ success: false, message: "No PDF file uploaded" });
   }
 
   // Upload PDF to Cloudinary
@@ -123,64 +141,81 @@ const uploadJD = asyncHandler(async (req, res) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           resource_type: "raw",
-          folder:        "placementpro/jds",
-          format:        "pdf",
-          public_id:     `jd_${req.user._id}_${Date.now()}`,
+          folder: "placementpro/jds",
+          format: "pdf",
+          public_id: `jd_${req.user._id}_${Date.now()}`,
         },
         (error, result) => {
           if (error) reject(error);
           else resolve(result);
-        }
+        },
       );
       uploadStream.end(req.file.buffer);
     });
   } catch (err) {
     console.error("Cloudinary upload failed:", err.message);
-    return res.status(500).json({ success: false, message: "Failed to upload PDF to cloud storage" });
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to upload PDF to cloud storage",
+      });
   }
 
   // Extract text from PDF
   let extractedText = "";
   try {
-    const pdfData  = await pdfParse(req.file.buffer);
-    extractedText  = pdfData.text || "";
+    const pdfData = await pdfParse(req.file.buffer);
+    extractedText = pdfData.text || "";
     console.log("PDF extracted, length:", extractedText.length);
   } catch (err) {
     console.error("PDF parse failed:", err.message);
-    return res.status(400).json({ success: false, message: "Could not read PDF. Please ensure it's a valid, text-based PDF." });
+    return res
+      .status(400)
+      .json({
+        success: false,
+        message:
+          "Could not read PDF. Please ensure it's a valid, text-based PDF.",
+      });
   }
 
   if (!extractedText || extractedText.trim().length < 50) {
-    return res.status(400).json({ success: false, message: "PDF appears to be empty or image-only. Please upload a text-based PDF." });
+    return res
+      .status(400)
+      .json({
+        success: false,
+        message:
+          "PDF appears to be empty or image-only. Please upload a text-based PDF.",
+      });
   }
 
-  const chunks     = chunkText(extractedText);
+  const chunks = chunkText(extractedText);
   const focusAreas = await extractFocusAreas(extractedText);
 
   // Deactivate previous sessions
   await JdSession.updateMany({ user: req.user._id }, { isActive: false });
 
   const session = await JdSession.create({
-    user:          req.user._id,
-    fileName:      `jd_${Date.now()}`,
-    originalName:  req.file.originalname,
+    user: req.user._id,
+    fileName: `jd_${Date.now()}`,
+    originalName: req.file.originalname,
     cloudinaryUrl: cloudinaryResult.secure_url,
-    cloudinaryId:  cloudinaryResult.public_id,
+    cloudinaryId: cloudinaryResult.public_id,
     extractedText,
     chunks,
     focusAreas,
-    chatHistory:   [],
-    isActive:      true,
+    chatHistory: [],
+    isActive: true,
   });
 
   res.status(201).json({
     success: true,
     data: {
-      sessionId:  session._id,
-      fileName:   req.file.originalname,
+      sessionId: session._id,
+      fileName: req.file.originalname,
       focusAreas,
-      pageCount:  chunks.length,
-      message:    "JD uploaded and analyzed successfully!",
+      pageCount: chunks.length,
+      message: "JD uploaded and analyzed successfully!",
     },
   });
 });
@@ -190,10 +225,12 @@ const chat = asyncHandler(async (req, res) => {
   const { message, sessionId } = req.body;
 
   if (!message || !message.trim()) {
-    return res.status(400).json({ success: false, message: "Message is required" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Message is required" });
   }
 
-  const query   = sessionId
+  const query = sessionId
     ? { _id: sessionId, user: req.user._id }
     : { user: req.user._id, isActive: true };
 
@@ -208,8 +245,8 @@ const chat = asyncHandler(async (req, res) => {
 
   // Retrieve relevant chunks + always include a broad JD summary (first 1500 chars)
   const relevantChunks = retrieveRelevantChunks(session.chunks, message);
-  const jdSummary      = session.extractedText.slice(0, 1500);
-  const context        = `=== JD OVERVIEW (first section) ===\n${jdSummary}\n\n=== RELEVANT SECTIONS ===\n${relevantChunks.join("\n\n---\n\n")}`;
+  const jdSummary = session.extractedText.slice(0, 1500);
+  const context = `=== JD OVERVIEW (first section) ===\n${jdSummary}\n\n=== RELEVANT SECTIONS ===\n${relevantChunks.join("\n\n---\n\n")}`;
 
   const systemPrompt = `You are an expert placement preparation coach for college students in India.
 
@@ -235,8 +272,8 @@ RESPONSE FORMAT RULES:
 - Always reference specific tools/skills from the JD (e.g., "Since this role requires PyTorch...")
 - Never give generic advice that doesn't relate to this specific JD`;
 
-  const recentHistory = session.chatHistory.slice(-8).map(m => ({
-    role:    m.role,
+  const recentHistory = session.chatHistory.slice(-8).map((m) => ({
+    role: m.role,
     content: m.content,
   }));
 
@@ -249,10 +286,10 @@ RESPONSE FORMAT RULES:
   let assistantMessage;
   try {
     const completion = await groq.chat.completions.create({
-      model:       "llama3-8b-8192",
+      model: "llama-3.1-8b-instant",
       messages,
       temperature: 0.5,
-      max_tokens:  1000,
+      max_tokens: 1000,
     });
     assistantMessage = completion.choices[0].message.content;
   } catch (err) {
@@ -263,7 +300,7 @@ RESPONSE FORMAT RULES:
     });
   }
 
-  session.chatHistory.push({ role: "user",      content: message });
+  session.chatHistory.push({ role: "user", content: message });
   session.chatHistory.push({ role: "assistant", content: assistantMessage });
 
   if (session.chatHistory.length > 20) {
@@ -275,7 +312,7 @@ RESPONSE FORMAT RULES:
   res.json({
     success: true,
     data: {
-      message:   assistantMessage,
+      message: assistantMessage,
       sessionId: session._id,
     },
   });
@@ -284,7 +321,7 @@ RESPONSE FORMAT RULES:
 // GET /api/chatbot/session
 const getSession = asyncHandler(async (req, res) => {
   const session = await JdSession.findOne({
-    user:     req.user._id,
+    user: req.user._id,
     isActive: true,
   }).select("-extractedText -chunks");
 
@@ -296,11 +333,11 @@ const getSession = asyncHandler(async (req, res) => {
     success: true,
     data: {
       session: {
-        _id:          session._id,
+        _id: session._id,
         originalName: session.originalName,
-        focusAreas:   session.focusAreas,
-        chatHistory:  session.chatHistory,
-        createdAt:    session.createdAt,
+        focusAreas: session.focusAreas,
+        chatHistory: session.chatHistory,
+        createdAt: session.createdAt,
       },
     },
   });
