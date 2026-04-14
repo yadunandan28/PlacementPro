@@ -1,0 +1,11 @@
+job_id,job_title,company_name,required_skills,experience_level,company_location,industry
+PP0001,AI Software Engineer,TechCorp Inc,"Python, Docker, AWS, Deep Learning, Mathematics",EN,India,Technology
+PP0002,NLP Engineer,Future Systems,"Python, NLP, SQL, Linux, Transformers",SE,India,Consulting
+PP0003,Data Scientist,Smart Analytics,"Python, Pandas, Scikit-learn, Statistics, SQL",MI,India,Automotive
+PP0004,ML Engineer,Autonomous Tech,"PyTorch, Kubernetes, MLOps, Python, APIs",SE,India,Education
+PP0005,Backend Engineer AI Platform,CloudForge,"Node.js, Python, FastAPI, Docker, PostgreSQL",MI,India,SaaS
+PP0006,Computer Vision Engineer,Vision Labs,"Python, OpenCV, Deep Learning, PyTorch, CUDA",SE,India,Healthcare
+PP0007,Data Engineer,DataSpring,"SQL, Spark, Python, Airflow, AWS",MI,India,Fintech
+PP0008,LLM Application Engineer,PromptWorks,"Python, LangChain, RAG, Vector Databases, APIs",SE,India,AI Products
+PP0009,DevOps Engineer ML Infra,InfraBridge,"Docker, Kubernetes, Linux, CI/CD, Monitoring",MI,India,Cloud
+PP0010,Applied AI Intern,NextGen AI,"Python, Git, Machine Learning, SQL, Communication",EN,India,Startup
