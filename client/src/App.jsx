@@ -13,6 +13,7 @@ import ProfilePage     from './pages/ProfilePage'
 import StaffDashboard  from './pages/StaffDashboard'
 import ChatbotPage     from './pages/ChatbotPage'   // ← NEW Phase 5
 import PrepareInterviewPage from './pages/PrepareInterviewPage'
+import CareerRecommendationsPage from './pages/CareerRecommendationsPage'
 import MockInterviewPage    from './pages/MockInterviewPage'
 import MyInterviewsPage from './pages/MyInterviewsPage'
 import ScheduleInterviewPage from './pages/ScheduleInterviewPage'
@@ -79,6 +80,7 @@ export default function App() {
         <Route path="/assessments"  element={<StudentRoute><AssessmentPage /></StudentRoute>} />
         <Route path="/chatbot"      element={<StudentRoute><ChatbotPage /></StudentRoute>} />  {/* NEW */}
         <Route path="/prepare-interview" element={<StudentRoute><PrepareInterviewPage /></StudentRoute>} />
+        <Route path="/career-recommendations" element={<StudentRoute><CareerRecommendationsPage /></StudentRoute>} />
         <Route path="/profile"      element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
         <Route path="/interview/:slotId" element={<StudentRoute><MockInterviewPage /></StudentRoute>} />
         <Route path="/my-interviews" element={<StudentRoute><MyInterviewsPage /></StudentRoute>} />

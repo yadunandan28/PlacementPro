@@ -221,4 +221,9 @@ export const interviewPrepAPI = {
   remove: (id) => api.delete(`/interview-prep/${id}`),
 };
 
+export const careerAPI = {
+  recommend: (payload) => api.post("/career/recommend", payload),
+  skillGap: (payload) => api.post("/career/skill-gap", payload),
+};
+
 export default api;
