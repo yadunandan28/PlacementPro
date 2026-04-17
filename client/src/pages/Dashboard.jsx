@@ -3,18 +3,19 @@
 // ============================================================
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { analyticsAPI } from '../api'
+import { analyticsAPI, trainingAPI } from '../api'
 import { useAuthStore } from '../store/authStore'
 import AppLayout from '../components/layout/AppLayout'
 import { Card, StatCard, ScoreBar, Badge, LoadingScreen } from '../components/ui'
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts'
-import { Code2, BookOpen, Trophy, TrendingUp } from 'lucide-react'
+import { Code2, BookOpen, Trophy, Bell } from 'lucide-react'
 
 export default function Dashboard() {
   const { user } = useAuthStore()
   const navigate  = useNavigate()
   const [analytics, setAnalytics] = useState(null)
   const [loading,   setLoading]   = useState(true)
+  const [trainingData, setTrainingData] = useState({ enrollments: [], unreadCount: 0 })
 
   useEffect(() => {
     analyticsAPI.getMyAnalytics().then(({ data }) => {
@@ -23,9 +24,37 @@ export default function Dashboard() {
     }).catch(() => setLoading(false))
   }, [])
 
+  useEffect(() => {
+    trainingAPI.getMy().then(({ data }) => {
+      setTrainingData(data.data || { enrollments: [], unreadCount: 0 })
+    }).catch(() => {})
+  }, [])
+
+  const refreshTrainings = () => {
+    trainingAPI.getMy().then(({ data }) => {
+      setTrainingData(data.data || { enrollments: [], unreadCount: 0 })
+    }).catch(() => {})
+  }
+
+  const toggleTrainingTask = async (enrollmentId, phaseId, taskId, done) => {
+    try {
+      await trainingAPI.toggleTask(enrollmentId, phaseId, taskId, done)
+      refreshTrainings()
+    } catch {}
+  }
+
+  const markTrainingRead = async (enrollmentId) => {
+    try {
+      await trainingAPI.markRead(enrollmentId)
+      refreshTrainings()
+    } catch {}
+  }
+
   if (loading) return <LoadingScreen />
 
   const a = analytics || {}
+  const enrollments = trainingData.enrollments || []
+  const unreadCount = trainingData.unreadCount || 0
 
   const subjectData = [
     { subject: 'DSA',  score: a.dsaScore  || 0 },
@@ -133,6 +162,67 @@ export default function Dashboard() {
             </button>
           ))}
         </div>
+
+        {/* Assigned roadmaps */}
+        <Card className="mt-6">
+          <div className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-bold text-white text-sm uppercase tracking-widest font-mono">Staff-assigned training roadmaps</h2>
+              <span className="text-xs text-slate-400 font-mono flex items-center gap-1">
+                <Bell size={13} className={unreadCount > 0 ? 'text-amber-400' : 'text-slate-500'} />
+                {unreadCount} unread
+              </span>
+            </div>
+
+            {enrollments.length === 0 ? (
+              <p className="text-sm text-slate-500">No training roadmap assigned yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {enrollments.slice(0, 3).map((enr) => {
+                  const total = (enr.phases || []).reduce((s, p) => s + (p.tasks || []).length, 0)
+                  const done = (enr.phases || []).reduce((s, p) => s + (p.tasks || []).filter(t => t.done).length, 0)
+                  const pct = total ? Math.round((done / total) * 100) : 0
+                  return (
+                    <div key={enr._id} className="p-3 rounded-lg border border-[#1c2a42] bg-[#151e30]">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-white">{enr.title}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{enr.roleSummary || 'Training assigned by staff'}</p>
+                        </div>
+                        {!enr.notificationRead && (
+                          <button onClick={() => markTrainingRead(enr._id)}>
+                            <Badge color="amber">Mark read</Badge>
+                          </button>
+                        )}
+                      </div>
+                      <div className="mt-2 h-1.5 bg-[#1c2a42] rounded-full overflow-hidden">
+                        <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">{done}/{total} tasks completed · {enr.status}</p>
+                      {(enr.phases || []).slice(0, 1).map((phase) => (
+                        <div key={phase._id} className="mt-2 pt-2 border-t border-[#1c2a42]">
+                          <p className="text-xs text-slate-400 mb-1">{phase.title}</p>
+                          <div className="space-y-1">
+                            {(phase.tasks || []).slice(0, 3).map((task) => (
+                              <label key={task._id} className="flex items-center gap-2 text-xs text-slate-300">
+                                <input
+                                  type="checkbox"
+                                  checked={task.done}
+                                  onChange={() => toggleTrainingTask(enr._id, phase._id, task._id, !task.done)}
+                                />
+                                <span className={task.done ? 'line-through text-slate-500' : ''}>{task.title}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </Card>
       </div>
     </AppLayout>
   )

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-import { analyticsAPI, cohortAPI } from '../api'
+import { analyticsAPI, cohortAPI, trainingAPI } from '../api'
 import AppLayout from '../components/layout/AppLayout'
 import { Card, StatCard, Button, LoadingScreen, Spinner } from '../components/ui'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { Download, ChevronDown, ChevronUp, Search, X, AlertTriangle } from 'lucide-react'
+import { Download, ChevronDown, ChevronUp, Search, X, AlertTriangle, Upload, Sparkles } from 'lucide-react'
 import api from '../api/axios'
 
 const TOOLTIP = {
@@ -187,19 +187,75 @@ export default function StaffDashboard() {
   const [sortBy,    setSortBy]    = useState('overallScore')
   const [sortDir,   setSortDir]   = useState('desc')
   const [atRiskTab, setAtRiskTab] = useState('overall') // overall | dsa | os | dbms | cn
+  const [campaigns, setCampaigns] = useState([])
+  const [uploadingJD, setUploadingJD] = useState(false)
+  const [assigningCampaignId, setAssigningCampaignId] = useState('')
+  const [selectedCampaignStudents, setSelectedCampaignStudents] = useState({})
+  const [trainingMsg, setTrainingMsg] = useState('')
 
   useEffect(() => {
     Promise.all([
       analyticsAPI.getOverview(),
       analyticsAPI.getAllStudents({ limit:100 }),
       cohortAPI.getAll(),
-    ]).then(([ov, st, co]) => {
+      trainingAPI.getStaffCampaigns().catch(() => ({ data: { data: { campaigns: [] } } })),
+    ]).then(([ov, st, co, tc]) => {
       setOverview(ov.data.data || {})
       setStudents(st.data.data.students || [])
       setCohorts(co.data.data.cohorts || [])
+      setCampaigns(tc.data.data.campaigns || [])
       setLoading(false)
     }).catch(err => { console.error('Dashboard error:', err); setLoading(false) })
   }, [])
+
+  const reloadCampaigns = async () => {
+    try {
+      const { data } = await trainingAPI.getStaffCampaigns()
+      setCampaigns(data.data.campaigns || [])
+    } catch {}
+  }
+
+  const uploadTrainingJD = async (file) => {
+    if (!file) return
+    setTrainingMsg('')
+    setUploadingJD(true)
+    try {
+      const { data } = await trainingAPI.uploadStaffJD(file)
+      setTrainingMsg(`JD processed. ${data.data.campaign.matchedStudents?.length || 0} students matched.`)
+      await reloadCampaigns()
+    } catch (e) {
+      setTrainingMsg(e.response?.data?.message || 'Could not process JD')
+    } finally {
+      setUploadingJD(false)
+    }
+  }
+
+  const toggleCampaignStudent = (campaignId, studentId) => {
+    setSelectedCampaignStudents(prev => {
+      const set = new Set(prev[campaignId] || [])
+      if (set.has(studentId)) set.delete(studentId)
+      else set.add(studentId)
+      return { ...prev, [campaignId]: Array.from(set) }
+    })
+  }
+
+  const assignCampaign = async (campaign) => {
+    setAssigningCampaignId(campaign._id)
+    setTrainingMsg('')
+    try {
+      const selectedIds = selectedCampaignStudents[campaign._id] || []
+      const payloadIds = selectedIds.length
+        ? selectedIds
+        : (campaign.matchedStudents || []).map(m => m.student?._id || m.student).filter(Boolean)
+      const { data } = await trainingAPI.assignCampaign(campaign._id, payloadIds)
+      setTrainingMsg(data.message || 'Assigned')
+      await reloadCampaigns()
+    } catch (e) {
+      setTrainingMsg(e.response?.data?.message || 'Could not assign campaign')
+    } finally {
+      setAssigningCampaignId('')
+    }
+  }
 
   const handleExport = async () => {
     setExporting(true)
@@ -375,6 +431,74 @@ export default function StaffDashboard() {
             </div>
           </Card>
         </div>
+
+        {/* JD-based Training Assignment */}
+        <Card className="mb-6">
+          <div className="p-4 border-b border-[#1c2a42] flex items-center justify-between gap-3">
+            <h2 className="font-bold text-white text-xs uppercase tracking-widest font-mono">
+              JD-based training assignment
+            </h2>
+            <label className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer text-sm ${uploadingJD ? 'opacity-60 pointer-events-none' : ''} border-[#1c2a42] text-slate-300 hover:border-blue-500/40`}>
+              <Upload size={14} /> {uploadingJD ? 'Analyzing JD...' : 'Upload JD PDF'}
+              <input
+                type="file"
+                accept="application/pdf"
+                className="hidden"
+                onChange={(e) => uploadTrainingJD(e.target.files?.[0])}
+              />
+            </label>
+          </div>
+          <div className="p-4">
+            {trainingMsg && <p className="text-xs text-blue-300 mb-3 font-mono">{trainingMsg}</p>}
+            {campaigns.length === 0 ? (
+              <p className="text-sm text-slate-500">Upload a JD to auto-detect related students and assign a roadmap.</p>
+            ) : (
+              <div className="space-y-3">
+                {campaigns.slice(0, 3).map((campaign) => {
+                  const selectedSet = new Set(selectedCampaignStudents[campaign._id] || [])
+                  return (
+                    <div key={campaign._id} className="border border-[#1c2a42] rounded-lg bg-[#151e30]">
+                      <div className="p-3 border-b border-[#1c2a42] flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-white">{campaign.originalName}</p>
+                          <p className="text-xs text-slate-500">{campaign.roleSummary || 'JD-based roadmap'}</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => assignCampaign(campaign)}
+                          loading={assigningCampaignId === campaign._id}
+                        >
+                          <Sparkles size={13} /> Assign roadmap
+                        </Button>
+                      </div>
+                      <div className="p-3">
+                        <p className="text-xs text-slate-500 mb-2">Matched students ({campaign.matchedStudents?.length || 0})</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {(campaign.matchedStudents || []).slice(0, 10).map((m, idx) => {
+                            const sid = m.student?._id || m.student
+                            return (
+                              <label key={`${sid}-${idx}`} className="flex items-center justify-between p-2 border border-[#1c2a42] rounded text-xs text-slate-300 cursor-pointer hover:border-slate-500">
+                                <span className="truncate mr-2">{m.student?.name || 'Student'} · {m.matchScore || 0}%</span>
+                                <input
+                                  type="checkbox"
+                                  checked={selectedSet.has(sid)}
+                                  onChange={() => toggleCampaignStudent(campaign._id, sid)}
+                                />
+                              </label>
+                            )
+                          })}
+                        </div>
+                        {(campaign.matchedStudents || []).length > 10 && (
+                          <p className="text-xs text-slate-600 mt-2">Showing first 10 students</p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </Card>
 
         {/* Students table */}
         <Card>

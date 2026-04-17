@@ -6,7 +6,7 @@ import { useAuthStore } from '../../store/authStore'
 import { authAPI } from '../../api'
 import {
   LayoutDashboard, Code2, BookOpen, User,
-  LogOut, BarChart3, ChevronRight, ClipboardList, Bot, Mic, Target, Briefcase
+  LogOut, BarChart3, ChevronRight, ClipboardList, Bot, Mic, Target
 } from 'lucide-react'
 
 const studentNav = [
@@ -15,7 +15,6 @@ const studentNav = [
   { to: '/assessments',    icon: ClipboardList,   label: 'Assessments'     },
   { to: '/practice',       icon: Code2,           label: 'Practice'        },
   { to: '/prepare-interview', icon: Target,       label: 'Prepare interview', badge: 'AI' },
-  { to: '/career-recommendations', icon: Briefcase, label: 'Job matches', badge: 'AI' },
   { to: '/chatbot',        icon: Bot,             label: 'JD Analyzer' },
   { to: '/my-interviews',  icon: Mic,             label: 'Mock Interviews', badge: 'NEW' },
   { to: '/profile',        icon: User,            label: 'Profile'         },

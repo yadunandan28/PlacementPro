@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
   # ── Main Backend (Port 5000) ───────────────────────────
@@ -9,25 +7,20 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
-    env_file:
-      - ./server/.env
     environment:
-      - PORT=5000
-      - CAREER_AI_SERVICE_URL=http://career-ai-service:8000
-    depends_on:
-      - career-ai-service
-    restart: unless-stopped
-
-  # ── Career AI Service (Port 8000) ───────────────────────
-  career-ai-service:
-    build:
-      context: ./career-ai-service
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    environment:
-      - ENABLE_EMBEDDINGS=false
-      - JOB_DATASET_PATH=data/jobs.csv
+      PORT: 5000
+      NODE_ENV: production
+      MONGO_URI: ${MONGO_URI}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ACCESS_EXPIRE: ${JWT_ACCESS_EXPIRE:-15m}
+      JWT_REFRESH_EXPIRE: ${JWT_REFRESH_EXPIRE:-7d}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      PISTON_URL: ${PISTON_URL:-http://host.docker.internal:2000}
+      COLLEGE_EMAIL_DOMAIN: ${COLLEGE_EMAIL_DOMAIN:-kct.ac.in}
+      GROQ_API_KEY: ${GROQ_API_KEY}
     restart: unless-stopped
 
   # ── Interview Microservice (Port 5001) ─────────────────
@@ -37,11 +30,17 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5001:5001"
-    env_file:
-      - ./interview-service/.env
     environment:
-      - PORT=5001
-      - MAIN_API_URL=http://server:5000
+      PORT: 5001
+      NODE_ENV: production
+      MONGO_URI: ${MONGO_URI}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      MAIN_API_URL: http://server:5000
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:5173}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
     depends_on:
       - server
     restart: unless-stopped
@@ -56,5 +55,4 @@ services:
     depends_on:
       - server
       - interview-service
-      - career-ai-service
     restart: unless-stopped
