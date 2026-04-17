@@ -221,9 +221,25 @@ export const interviewPrepAPI = {
   remove: (id) => api.delete(`/interview-prep/${id}`),
 };
 
-export const careerAPI = {
-  recommend: (payload) => api.post("/career/recommend", payload),
-  skillGap: (payload) => api.post("/career/skill-gap", payload),
+export const trainingAPI = {
+  getMy: () => api.get("/training/my"),
+  toggleTask: (enrollmentId, phaseId, taskId, done) =>
+    api.patch(
+      `/training/my/${enrollmentId}/phases/${phaseId}/tasks/${taskId}`,
+      { done },
+    ),
+  markRead: (enrollmentId) => api.patch(`/training/my/${enrollmentId}/read`),
+
+  getStaffCampaigns: () => api.get("/training/staff/campaigns"),
+  uploadStaffJD: (file) => {
+    const form = new FormData();
+    form.append("jd", file);
+    return api.post("/training/staff/upload-jd", form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  assignCampaign: (campaignId, studentIds) =>
+    api.post(`/training/staff/campaigns/${campaignId}/assign`, { studentIds }),
 };
 
 export default api;
