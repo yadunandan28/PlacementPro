@@ -273,6 +273,7 @@ const startInterview = asyncHandler(async (req, res) => {
     .populate("student", "name email department rollNumber cgpa skills cohort");
 
   if (!slot) return res.status(404).json({ success: false, message: "Interview slot not found" });
+  if (!slot.student) return res.status(404).json({ success: false, message: "Student account associated with this slot no longer exists" });
   if (slot.student._id.toString() !== req.user._id.toString()) {
     return res.status(403).json({ success: false, message: "This interview is not assigned to you" });
   }
