@@ -24,6 +24,8 @@ require("./models/JdSession"); // ← NEW Phase 5
 require("./models/InterviewPrep");
 require("./models/TrainingCampaign");
 require("./models/TrainingEnrollment");
+require("./models/Quiz");
+require("./models/QuizAttempt");
 
 const app = express();
 
@@ -72,6 +74,7 @@ app.use("/api/analytics", require("./routes/analytics.routes"));
 app.use("/api/chatbot", require("./routes/chatbot.routes")); // ← NEW
 app.use("/api/interview-prep", require("./routes/interviewPrep.routes"));
 app.use("/api/training", require("./routes/training.routes"));
+app.use("/api/quiz", require("./routes/quiz.routes"));
 
 app.get("/health", (_req, res) =>
   res.json({
@@ -87,6 +90,7 @@ app.get("/health", (_req, res) =>
       "chatbot",
       "interview-prep",
       "training-roadmaps",
+      "ai-quiz",
     ],
   }),
 );

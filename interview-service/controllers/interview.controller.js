@@ -1,10 +1,10 @@
-const asyncHandler  = require("express-async-handler");
-const cloudinary    = require("../config/cloudinary");
-const Groq          = require("groq-sdk");
-const fs            = require("fs");
-const path          = require("path");
-const os            = require("os");
-const InterviewSlot    = require("../models/InterviewSlot");
+const asyncHandler = require("express-async-handler");
+const cloudinary = require("../config/cloudinary");
+const Groq = require("groq-sdk");
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
+const InterviewSlot = require("../models/InterviewSlot");
 const InterviewSession = require("../models/InterviewSession");
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -12,10 +12,10 @@ const MODEL = "llama-3.1-8b-instant";
 
 const PISTON_URL = process.env.PISTON_URL || "http://localhost:2000";
 const PISTON_LANG_MAP = {
-  python:     { language: "python",  version: "3.12.0"  },
-  javascript: { language: "node",    version: "20.11.1" },
-  java:       { language: "java",    version: "15.0.2"  },
-  cpp:        { language: "c++",     version: "10.2.0"  },
+  python: { language: "python", version: "3.12.0" },
+  javascript: { language: "node", version: "20.11.1" },
+  java: { language: "java", version: "15.0.2" },
+  cpp: { language: "c++", version: "10.2.0" },
 };
 
 // ── Helpers ───────────────────────────────────────────────
@@ -56,13 +56,13 @@ Return ONLY valid JSON in this exact format, nothing else:
 
   try {
     const completion = await groq.chat.completions.create({
-      model:       MODEL,
-      messages:    [{ role: "user", content: prompt }],
+      model: MODEL,
+      messages: [{ role: "user", content: prompt }],
       temperature: 0.4,
-      max_tokens:  1500,
+      max_tokens: 1500,
     });
 
-    const raw   = completion.choices[0].message.content.trim();
+    const raw = completion.choices[0].message.content.trim();
     const match = raw.match(/\{[\s\S]*\}/);
     if (match) {
       const parsed = JSON.parse(match[0]);
@@ -75,13 +75,46 @@ Return ONLY valid JSON in this exact format, nothing else:
     console.error("Question generation failed:", err.message);
     // Fallback questions
     return [
-      { order: 1, type: "verbal",  question: "Tell me about yourself and your background." },
-      { order: 2, type: "verbal",  question: "What are your strongest technical skills relevant to this role?" },
-      { order: 3, type: "verbal",  question: "Describe a challenging project you worked on and how you solved it." },
-      { order: 4, type: "verbal",  question: "How do you stay updated with the latest developments in your field?" },
-      { order: 5, type: "verbal",  question: "Where do you see yourself in 3 years?" },
-      { order: 6, type: "coding",  question: "Write a function to reverse a linked list. Return the new head. Input: 1->2->3->4->5, Output: 5->4->3->2->1" },
-      { order: 7, type: "coding",  question: "Write a function to check if a string is a palindrome, ignoring spaces and case. Input: 'A man a plan a canal Panama' → Output: True" },
+      {
+        order: 1,
+        type: "verbal",
+        question: "Tell me about yourself and your background.",
+      },
+      {
+        order: 2,
+        type: "verbal",
+        question:
+          "What are your strongest technical skills relevant to this role?",
+      },
+      {
+        order: 3,
+        type: "verbal",
+        question:
+          "Describe a challenging project you worked on and how you solved it.",
+      },
+      {
+        order: 4,
+        type: "verbal",
+        question:
+          "How do you stay updated with the latest developments in your field?",
+      },
+      {
+        order: 5,
+        type: "verbal",
+        question: "Where do you see yourself in 3 years?",
+      },
+      {
+        order: 6,
+        type: "coding",
+        question:
+          "Write a function to reverse a linked list. Return the new head. Input: 1->2->3->4->5, Output: 5->4->3->2->1",
+      },
+      {
+        order: 7,
+        type: "coding",
+        question:
+          "Write a function to check if a string is a palindrome, ignoring spaces and case. Input: 'A man a plan a canal Panama' → Output: True",
+      },
     ];
   }
 }
@@ -108,24 +141,39 @@ Return ONLY valid JSON:
 
   try {
     const completion = await groq.chat.completions.create({
-      model:       MODEL,
-      messages:    [{ role: "user", content: prompt }],
+      model: MODEL,
+      messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
-      max_tokens:  300,
+      max_tokens: 300,
     });
-    const raw   = completion.choices[0].message.content.trim();
+    const raw = completion.choices[0].message.content.trim();
     const match = raw.match(/\{[\s\S]*\}/);
     if (match) {
       const parsed = JSON.parse(match[0]);
-      return { score: Math.min(10, Math.max(0, Number(parsed.score) || 5)), feedback: parsed.feedback || "Answer recorded." };
+      return {
+        score: Math.min(10, Math.max(0, Number(parsed.score) || 5)),
+        feedback: parsed.feedback || "Answer recorded.",
+      };
     }
-    return { score: 5, feedback: "Answer recorded. Keep practicing for better clarity." };
+    return {
+      score: 5,
+      feedback: "Answer recorded. Keep practicing for better clarity.",
+    };
   } catch {
-    return { score: 5, feedback: "Answer recorded. Keep practicing for better clarity." };
+    return {
+      score: 5,
+      feedback: "Answer recorded. Keep practicing for better clarity.",
+    };
   }
 }
 
-async function evaluateCodeAnswer(question, code, language, codeOutput, expectedBehavior) {
+async function evaluateCodeAnswer(
+  question,
+  code,
+  language,
+  codeOutput,
+  expectedBehavior,
+) {
   const prompt = `You are a technical interviewer evaluating a coding solution.
 
 PROBLEM: ${question}
@@ -149,16 +197,19 @@ Return ONLY valid JSON:
 
   try {
     const completion = await groq.chat.completions.create({
-      model:       MODEL,
-      messages:    [{ role: "user", content: prompt }],
+      model: MODEL,
+      messages: [{ role: "user", content: prompt }],
       temperature: 0.2,
-      max_tokens:  300,
+      max_tokens: 300,
     });
-    const raw   = completion.choices[0].message.content.trim();
+    const raw = completion.choices[0].message.content.trim();
     const match = raw.match(/\{[\s\S]*\}/);
     if (match) {
       const parsed = JSON.parse(match[0]);
-      return { score: Math.min(10, Math.max(0, Number(parsed.score) || 4)), feedback: parsed.feedback || "Code submitted." };
+      return {
+        score: Math.min(10, Math.max(0, Number(parsed.score) || 4)),
+        feedback: parsed.feedback || "Code submitted.",
+      };
     }
     return { score: 4, feedback: "Code submitted and reviewed." };
   } catch {
@@ -167,9 +218,12 @@ Return ONLY valid JSON:
 }
 
 async function generateFinalReport(questions, jdText) {
-  const answeredQuestions = questions.map((q, i) =>
-    `Q${i+1} (${q.type}): ${q.question}\nAnswer: ${q.transcript || q.code || "Not answered"}\nScore: ${q.score}/10\nFeedback: ${q.feedback}`
-  ).join("\n\n");
+  const answeredQuestions = questions
+    .map(
+      (q, i) =>
+        `Q${i + 1} (${q.type}): ${q.question}\nAnswer: ${q.transcript || q.code || "Not answered"}\nScore: ${q.score}/10\nFeedback: ${q.feedback}`,
+    )
+    .join("\n\n");
 
   const prompt = `You are a senior hiring manager writing a candidate evaluation report.
 
@@ -187,10 +241,10 @@ Keep it professional and specific.`;
 
   try {
     const completion = await groq.chat.completions.create({
-      model:       MODEL,
-      messages:    [{ role: "user", content: prompt }],
+      model: MODEL,
+      messages: [{ role: "user", content: prompt }],
       temperature: 0.5,
-      max_tokens:  600,
+      max_tokens: 600,
     });
     return completion.choices[0].message.content.trim();
   } catch {
@@ -204,18 +258,22 @@ async function runCodeOnPiston(language, code) {
 
   try {
     const response = await fetch(`${PISTON_URL}/api/v2/execute`, {
-      method:  "POST",
+      method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         language: lang.language,
-        version:  lang.version,
-        files:    [{ name: "solution", content: code }],
+        version: lang.version,
+        files: [{ name: "solution", content: code }],
       }),
     });
     const result = await response.json();
     return result.run || { stdout: "", stderr: "Execution failed", code: 1 };
   } catch (err) {
-    return { stdout: "", stderr: `Cannot connect to code runner: ${err.message}`, code: 1 };
+    return {
+      stdout: "",
+      stderr: `Cannot connect to code runner: ${err.message}`,
+      code: 1,
+    };
   }
 }
 
@@ -223,24 +281,28 @@ async function runCodeOnPiston(language, code) {
 
 // POST /api/interview/slots  (staff only)
 const createSlot = asyncHandler(async (req, res) => {
-  const { studentId, scheduledAt, duration, jdText, jdFileName, notes } = req.body;
+  const { studentId, scheduledAt, duration, jdText, jdFileName, notes } =
+    req.body;
 
   if (!studentId || !scheduledAt) {
-    return res.status(400).json({ success: false, message: "studentId and scheduledAt are required" });
+    return res.status(400).json({
+      success: false,
+      message: "studentId and scheduledAt are required",
+    });
   }
 
   const slot = await InterviewSlot.create({
-    student:     studentId,
+    student: studentId,
     scheduledBy: req.user._id,
     scheduledAt: new Date(scheduledAt),
-    duration:    duration || 45,
-    jdText:      jdText    || "",
-    jdFileName:  jdFileName || "",
-    notes:       notes     || "",
+    duration: duration || 45,
+    jdText: jdText || "",
+    jdFileName: jdFileName || "",
+    notes: notes || "",
   });
 
   const populated = await InterviewSlot.findById(slot._id)
-    .populate("student",     "name email rollNumber department")
+    .populate("student", "name email rollNumber department")
     .populate("scheduledBy", "name");
 
   res.status(201).json({ success: true, data: { slot: populated } });
@@ -249,8 +311,8 @@ const createSlot = asyncHandler(async (req, res) => {
 // GET /api/interview/slots  (staff — all slots)
 const getAllSlots = asyncHandler(async (req, res) => {
   const slots = await InterviewSlot.find()
-    .populate("student",        "name email rollNumber department cohort")
-    .populate("scheduledBy",    "name")
+    .populate("student", "name email rollNumber department cohort")
+    .populate("scheduledBy", "name")
     .populate("interviewSession", "percentageScore status totalScore")
     .sort({ scheduledAt: -1 })
     .lean();
@@ -260,7 +322,7 @@ const getAllSlots = asyncHandler(async (req, res) => {
 // GET /api/interview/my-slots  (student — own slots)
 const getMySlots = asyncHandler(async (req, res) => {
   const slots = await InterviewSlot.find({ student: req.user._id })
-    .populate("scheduledBy",    "name")
+    .populate("scheduledBy", "name")
     .populate("interviewSession", "percentageScore status aiReport questions")
     .sort({ scheduledAt: -1 })
     .lean();
@@ -269,29 +331,45 @@ const getMySlots = asyncHandler(async (req, res) => {
 
 // POST /api/interview/slots/:slotId/start  (student starts the interview)
 const startInterview = asyncHandler(async (req, res) => {
-  const slot = await InterviewSlot.findById(req.params.slotId)
-    .populate("student", "name email department rollNumber cgpa skills cohort");
+  const slot = await InterviewSlot.findById(req.params.slotId).populate(
+    "student",
+    "name email department rollNumber cgpa skills cohort",
+  );
 
-  if (!slot) return res.status(404).json({ success: false, message: "Interview slot not found" });
-  if (!slot.student) return res.status(404).json({ success: false, message: "Student account associated with this slot no longer exists" });
+  if (!slot)
+    return res
+      .status(404)
+      .json({ success: false, message: "Interview slot not found" });
+  if (!slot.student)
+    return res.status(404).json({
+      success: false,
+      message: "Student account associated with this slot no longer exists",
+    });
   if (slot.student._id.toString() !== req.user._id.toString()) {
-    return res.status(403).json({ success: false, message: "This interview is not assigned to you" });
+    return res.status(403).json({
+      success: false,
+      message: "This interview is not assigned to you",
+    });
   }
   if (slot.status === "completed") {
-    return res.status(400).json({ success: false, message: "This interview is already completed" });
+    return res
+      .status(400)
+      .json({ success: false, message: "This interview is already completed" });
   }
 
   // If session already exists (rejoining), return existing
   if (slot.interviewSession) {
-    const existingSession = await InterviewSession.findById(slot.interviewSession);
+    const existingSession = await InterviewSession.findById(
+      slot.interviewSession,
+    );
     if (existingSession && existingSession.status === "in_progress") {
       return res.json({
         success: true,
         data: {
-          sessionId:           existingSession._id,
+          sessionId: existingSession._id,
           currentQuestionIndex: existingSession.currentQuestionIndex,
-          questions:           existingSession.questions,
-          resuming:            true,
+          questions: existingSession.questions,
+          resuming: true,
         },
       });
     }
@@ -299,7 +377,8 @@ const startInterview = asyncHandler(async (req, res) => {
 
   // Build resume summary from student profile
   const student = slot.student;
-  const resumeSummary = req.body.resumeText ||
+  const resumeSummary =
+    req.body.resumeText ||
     `Name: ${student.name}
 Department: ${student.department}
 Roll Number: ${student.rollNumber || "N/A"}
@@ -308,7 +387,8 @@ Skills: ${(student.skills || []).join(", ") || "Not specified"}
 Cohort/Domain: ${student.cohort ? (typeof student.cohort === "object" ? student.cohort.name : student.cohort) : "Not specified"}`;
 
   // Use JD from slot or from request body
-  const jdText = slot.jdText || req.body.jdText || "General software engineering role";
+  const jdText =
+    slot.jdText || req.body.jdText || "General software engineering role";
 
   // Generate interview questions
   console.log("Generating interview questions for:", student.name);
@@ -316,19 +396,19 @@ Cohort/Domain: ${student.cohort ? (typeof student.cohort === "object" ? student.
 
   // Create interview session
   const session = await InterviewSession.create({
-    slot:          slot._id,
-    student:       req.user._id,
+    slot: slot._id,
+    student: req.user._id,
     jdText,
-    jdFileName:    slot.jdFileName || "",
+    jdFileName: slot.jdFileName || "",
     resumeSummary,
     questions,
     currentQuestionIndex: 0,
-    status:        "in_progress",
-    startedAt:     new Date(),
+    status: "in_progress",
+    startedAt: new Date(),
   });
 
   // Link session to slot
-  slot.status           = "in_progress";
+  slot.status = "in_progress";
   slot.interviewSession = session._id;
   if (!slot.resumeText) slot.resumeText = resumeSummary;
   await slot.save();
@@ -336,10 +416,10 @@ Cohort/Domain: ${student.cohort ? (typeof student.cohort === "object" ? student.
   res.json({
     success: true,
     data: {
-      sessionId:            session._id,
+      sessionId: session._id,
       currentQuestionIndex: 0,
-      questions:            session.questions,
-      resuming:             false,
+      questions: session.questions,
+      resuming: false,
     },
   });
 });
@@ -347,7 +427,9 @@ Cohort/Domain: ${student.cohort ? (typeof student.cohort === "object" ? student.
 // POST /api/interview/transcribe  (Groq Whisper)
 const transcribeAudio = asyncHandler(async (req, res) => {
   if (!req.file) {
-    return res.status(400).json({ success: false, message: "No audio file uploaded" });
+    return res
+      .status(400)
+      .json({ success: false, message: "No audio file uploaded" });
   }
 
   // Write buffer to temp file
@@ -356,7 +438,7 @@ const transcribeAudio = asyncHandler(async (req, res) => {
 
   try {
     const transcription = await groq.audio.transcriptions.create({
-      file:  fs.createReadStream(tmpFile),
+      file: fs.createReadStream(tmpFile),
       model: "whisper-large-v3",
       response_format: "json",
       language: "en",
@@ -365,9 +447,14 @@ const transcribeAudio = asyncHandler(async (req, res) => {
     res.json({ success: true, data: { transcript: transcription.text || "" } });
   } catch (err) {
     console.error("Whisper transcription error:", err.message);
-    res.status(500).json({ success: false, message: "Transcription failed. Please try again." });
+    res.status(500).json({
+      success: false,
+      message: "Transcription failed. Please try again.",
+    });
   } finally {
-    try { fs.unlinkSync(tmpFile); } catch {}
+    try {
+      fs.unlinkSync(tmpFile);
+    } catch {}
   }
 });
 
@@ -376,46 +463,61 @@ const submitVerbalAnswer = asyncHandler(async (req, res) => {
   const { transcript, timeSpent } = req.body;
   const session = await InterviewSession.findById(req.params.sessionId);
 
-  if (!session) return res.status(404).json({ success: false, message: "Session not found" });
+  if (!session)
+    return res
+      .status(404)
+      .json({ success: false, message: "Session not found" });
   if (session.student.toString() !== req.user._id.toString()) {
     return res.status(403).json({ success: false, message: "Unauthorized" });
   }
   if (session.status === "completed") {
-    return res.status(400).json({ success: false, message: "Interview already completed" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Interview already completed" });
   }
 
-  const idx      = session.currentQuestionIndex;
+  const idx = session.currentQuestionIndex;
   const question = session.questions[idx];
 
   if (!question || question.type !== "verbal") {
-    return res.status(400).json({ success: false, message: "Current question is not a verbal question" });
+    return res.status(400).json({
+      success: false,
+      message: "Current question is not a verbal question",
+    });
   }
 
   // Evaluate the answer
-  const evaluation = await evaluateVerbalAnswer(question.question, transcript || "", session.jdText);
+  const evaluation = await evaluateVerbalAnswer(
+    question.question,
+    transcript || "",
+    session.jdText,
+  );
 
   // Save to session
   session.questions[idx].transcript = transcript || "";
-  session.questions[idx].score      = evaluation.score;
-  session.questions[idx].feedback   = evaluation.feedback;
-  session.questions[idx].timeSpent  = timeSpent || 0;
-  session.questions[idx].answered   = true;
+  session.questions[idx].score = evaluation.score;
+  session.questions[idx].feedback = evaluation.feedback;
+  session.questions[idx].timeSpent = timeSpent || 0;
+  session.questions[idx].answered = true;
 
   // Advance to next question
   session.currentQuestionIndex = idx + 1;
   session.markModified("questions");
   await session.save();
 
-  const isLastQuestion  = session.currentQuestionIndex >= session.questions.length;
-  const nextQuestion    = isLastQuestion ? null : session.questions[session.currentQuestionIndex];
+  const isLastQuestion =
+    session.currentQuestionIndex >= session.questions.length;
+  const nextQuestion = isLastQuestion
+    ? null
+    : session.questions[session.currentQuestionIndex];
 
   res.json({
     success: true,
     data: {
-      score:            evaluation.score,
-      feedback:         evaluation.feedback,
+      score: evaluation.score,
+      feedback: evaluation.feedback,
       nextQuestion,
-      nextIndex:        session.currentQuestionIndex,
+      nextIndex: session.currentQuestionIndex,
       isLastQuestion,
     },
   });
@@ -426,52 +528,67 @@ const submitCodeAnswer = asyncHandler(async (req, res) => {
   const { code, language, timeSpent } = req.body;
   const session = await InterviewSession.findById(req.params.sessionId);
 
-  if (!session) return res.status(404).json({ success: false, message: "Session not found" });
+  if (!session)
+    return res
+      .status(404)
+      .json({ success: false, message: "Session not found" });
   if (session.student.toString() !== req.user._id.toString()) {
     return res.status(403).json({ success: false, message: "Unauthorized" });
   }
 
-  const idx      = session.currentQuestionIndex;
+  const idx = session.currentQuestionIndex;
   const question = session.questions[idx];
 
   if (!question || question.type !== "coding") {
-    return res.status(400).json({ success: false, message: "Current question is not a coding question" });
+    return res.status(400).json({
+      success: false,
+      message: "Current question is not a coding question",
+    });
   }
 
   // Run code on Piston
-  const runResult  = await runCodeOnPiston(language || "python", code || "");
+  const runResult = await runCodeOnPiston(language || "python", code || "");
   const codeOutput = runResult.stdout || runResult.stderr || "No output";
   const codeStatus = runResult.code === 0 ? "ran" : "error";
 
   // AI evaluation
-  const evaluation = await evaluateCodeAnswer(question.question, code || "", language || "python", codeOutput, "");
+  const evaluation = await evaluateCodeAnswer(
+    question.question,
+    code || "",
+    language || "python",
+    codeOutput,
+    "",
+  );
 
   // Save
-  session.questions[idx].code       = code || "";
-  session.questions[idx].language   = language || "python";
+  session.questions[idx].code = code || "";
+  session.questions[idx].language = language || "python";
   session.questions[idx].codeOutput = codeOutput;
   session.questions[idx].codeStatus = codeStatus;
-  session.questions[idx].score      = evaluation.score;
-  session.questions[idx].feedback   = evaluation.feedback;
-  session.questions[idx].timeSpent  = timeSpent || 0;
-  session.questions[idx].answered   = true;
+  session.questions[idx].score = evaluation.score;
+  session.questions[idx].feedback = evaluation.feedback;
+  session.questions[idx].timeSpent = timeSpent || 0;
+  session.questions[idx].answered = true;
 
   session.currentQuestionIndex = idx + 1;
   session.markModified("questions");
   await session.save();
 
-  const isLastQuestion = session.currentQuestionIndex >= session.questions.length;
-  const nextQuestion   = isLastQuestion ? null : session.questions[session.currentQuestionIndex];
+  const isLastQuestion =
+    session.currentQuestionIndex >= session.questions.length;
+  const nextQuestion = isLastQuestion
+    ? null
+    : session.questions[session.currentQuestionIndex];
 
   res.json({
     success: true,
     data: {
-      score:       evaluation.score,
-      feedback:    evaluation.feedback,
+      score: evaluation.score,
+      feedback: evaluation.feedback,
       codeOutput,
       codeStatus,
       nextQuestion,
-      nextIndex:   session.currentQuestionIndex,
+      nextIndex: session.currentQuestionIndex,
       isLastQuestion,
     },
   });
@@ -484,8 +601,8 @@ const runCode = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     data: {
-      stdout:   result.stdout || "",
-      stderr:   result.stderr || "",
+      stdout: result.stdout || "",
+      stderr: result.stderr || "",
       exitCode: result.code,
     },
   });
@@ -495,7 +612,10 @@ const runCode = asyncHandler(async (req, res) => {
 const finishInterview = asyncHandler(async (req, res) => {
   const session = await InterviewSession.findById(req.params.sessionId);
 
-  if (!session) return res.status(404).json({ success: false, message: "Session not found" });
+  if (!session)
+    return res
+      .status(404)
+      .json({ success: false, message: "Session not found" });
   if (session.student.toString() !== req.user._id.toString()) {
     return res.status(403).json({ success: false, message: "Unauthorized" });
   }
@@ -504,19 +624,22 @@ const finishInterview = asyncHandler(async (req, res) => {
   }
 
   // Calculate final score
-  const totalScore = session.questions.reduce((sum, q) => sum + (q.score || 0), 0);
-  const maxScore   = session.questions.length * 10;
+  const totalScore = session.questions.reduce(
+    (sum, q) => sum + (q.score || 0),
+    0,
+  );
+  const maxScore = session.questions.length * 10;
   const percentage = Math.round((totalScore / maxScore) * 100);
 
   // Generate AI report
   const aiReport = await generateFinalReport(session.questions, session.jdText);
 
-  session.totalScore      = totalScore;
-  session.maxScore        = maxScore;
+  session.totalScore = totalScore;
+  session.maxScore = maxScore;
   session.percentageScore = percentage;
-  session.aiReport        = aiReport;
-  session.status          = "completed";
-  session.completedAt     = new Date();
+  session.aiReport = aiReport;
+  session.status = "completed";
+  session.completedAt = new Date();
   await session.save();
 
   // Update slot status
@@ -525,11 +648,20 @@ const finishInterview = asyncHandler(async (req, res) => {
   // Update Analytics in main DB (best effort — call main server API)
   try {
     const fetch = require("node-fetch");
-    await fetch(`${process.env.MAIN_API_URL || "http://localhost:5000"}/api/analytics/mock-interview`, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json", "x-service-key": process.env.SERVICE_KEY || "interview-service" },
-      body:    JSON.stringify({ userId: session.student.toString(), score: percentage }),
-    });
+    await fetch(
+      `${process.env.MAIN_API_URL || "http://localhost:5000"}/api/analytics/mock-interview`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-service-key": process.env.SERVICE_KEY || "interview-service",
+        },
+        body: JSON.stringify({
+          userId: session.student.toString(),
+          score: percentage,
+        }),
+      },
+    );
   } catch (err) {
     console.warn("Analytics update warn:", err.message);
   }
@@ -541,8 +673,8 @@ const finishInterview = asyncHandler(async (req, res) => {
       maxScore,
       percentageScore: percentage,
       aiReport,
-      questions:       session.questions,
-      completedAt:     session.completedAt,
+      questions: session.questions,
+      completedAt: session.completedAt,
     },
   });
 });
@@ -552,7 +684,10 @@ const getResult = asyncHandler(async (req, res) => {
   const session = await InterviewSession.findById(req.params.sessionId)
     .populate("student", "name email rollNumber")
     .lean();
-  if (!session) return res.status(404).json({ success: false, message: "Session not found" });
+  if (!session)
+    return res
+      .status(404)
+      .json({ success: false, message: "Session not found" });
   res.json({ success: true, data: { session } });
 });
 
@@ -560,7 +695,9 @@ const getResult = asyncHandler(async (req, res) => {
 const getAnalytics = asyncHandler(async (req, res) => {
   const sessions = await InterviewSession.find({ status: "completed" })
     .populate("student", "name email rollNumber department cohort")
-    .select("student percentageScore totalScore questions completedAt jdFileName")
+    .select(
+      "student percentageScore totalScore questions completedAt jdFileName",
+    )
     .sort({ completedAt: -1 })
     .lean();
 
@@ -569,26 +706,43 @@ const getAnalytics = asyncHandler(async (req, res) => {
   for (const s of sessions) {
     const uid = s.student?._id?.toString();
     if (!uid) continue;
-    if (!studentMap[uid] || s.percentageScore > studentMap[uid].percentageScore) {
+    if (
+      !studentMap[uid] ||
+      s.percentageScore > studentMap[uid].percentageScore
+    ) {
       studentMap[uid] = s;
     }
   }
-  const topStudents = Object.values(studentMap).sort((a, b) => b.percentageScore - a.percentageScore);
+  const topStudents = Object.values(studentMap).sort(
+    (a, b) => b.percentageScore - a.percentageScore,
+  );
 
   // Average per question type
-  const allVerbal = sessions.flatMap(s => s.questions.filter(q => q.type === "verbal"));
-  const allCoding = sessions.flatMap(s => s.questions.filter(q => q.type === "coding"));
-  const avgVerbal = allVerbal.length ? Math.round(allVerbal.reduce((s, q) => s + q.score, 0) / allVerbal.length * 10) : 0;
-  const avgCoding = allCoding.length ? Math.round(allCoding.reduce((s, q) => s + q.score, 0) / allCoding.length * 10) : 0;
+  const allVerbal = sessions.flatMap((s) =>
+    s.questions.filter((q) => q.type === "verbal"),
+  );
+  const allCoding = sessions.flatMap((s) =>
+    s.questions.filter((q) => q.type === "coding"),
+  );
+  const avgVerbal = allVerbal.length
+    ? Math.round(
+        (allVerbal.reduce((s, q) => s + q.score, 0) / allVerbal.length) * 10,
+      )
+    : 0;
+  const avgCoding = allCoding.length
+    ? Math.round(
+        (allCoding.reduce((s, q) => s + q.score, 0) / allCoding.length) * 10,
+      )
+    : 0;
 
   res.json({
     success: true,
     data: {
       totalInterviews: sessions.length,
-      topStudents:     topStudents.slice(0, 10),
-      allSessions:     sessions,
-      avgVerbalScore:  avgVerbal,
-      avgCodingScore:  avgCoding,
+      topStudents: topStudents.slice(0, 10),
+      allSessions: sessions,
+      avgVerbalScore: avgVerbal,
+      avgCodingScore: avgCoding,
     },
   });
 });
@@ -599,17 +753,25 @@ const uploadRecording = asyncHandler(async (req, res) => {
   const { questionIndex, questionType, duration } = req.body;
   const session = await InterviewSession.findById(req.params.sessionId);
 
-  if (!session) return res.status(404).json({ success: false, message: "Session not found" });
+  if (!session)
+    return res
+      .status(404)
+      .json({ success: false, message: "Session not found" });
   if (session.student.toString() !== req.user._id.toString()) {
     return res.status(403).json({ success: false, message: "Unauthorized" });
   }
   if (!req.file) {
-    return res.status(400).json({ success: false, message: "No video file provided" });
+    return res
+      .status(400)
+      .json({ success: false, message: "No video file provided" });
   }
 
   // Cloudinary not configured — skip upload gracefully
   if (!process.env.CLOUDINARY_CLOUD_NAME) {
-    return res.json({ success: true, data: { uploaded: false, reason: "Cloudinary not configured" } });
+    return res.json({
+      success: true,
+      data: { uploaded: false, reason: "Cloudinary not configured" },
+    });
   }
 
   // Upload to Cloudinary as video, folder: interview-recordings
@@ -617,15 +779,15 @@ const uploadRecording = asyncHandler(async (req, res) => {
     const stream = cloudinary.uploader.upload_stream(
       {
         resource_type: "video",
-        folder:        "placementpro/interview-recordings",
-        public_id:     `session_${session._id}_q${questionIndex}_${Date.now()}`,
-        overwrite:     true,
-        format:        "webm",
+        folder: "placementpro/interview-recordings",
+        public_id: `session_${session._id}_q${questionIndex}_${Date.now()}`,
+        overwrite: true,
+        format: "webm",
       },
       (err, result) => {
         if (err) reject(err);
         else resolve(result);
-      }
+      },
     );
     stream.end(req.file.buffer);
   });
@@ -636,13 +798,13 @@ const uploadRecording = asyncHandler(async (req, res) => {
   // Add to session recordings array
   session.recordings.push({
     questionIndex: Number(questionIndex),
-    questionType:  questionType || "verbal",
+    questionType: questionType || "verbal",
     cloudinaryUrl: uploadResult.secure_url,
-    publicId:      uploadResult.public_id,
-    duration:      Number(duration) || 0,
-    uploadedAt:    new Date(),
+    publicId: uploadResult.public_id,
+    duration: Number(duration) || 0,
+    uploadedAt: new Date(),
     deleteAt,
-    expired:       false,
+    expired: false,
   });
   session.markModified("recordings");
   await session.save();
@@ -650,9 +812,9 @@ const uploadRecording = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     data: {
-      uploaded:     true,
+      uploaded: true,
       cloudinaryUrl: uploadResult.secure_url,
-      deleteAt:     deleteAt.toISOString(),
+      deleteAt: deleteAt.toISOString(),
     },
   });
 });
@@ -662,15 +824,28 @@ const getRecordings = asyncHandler(async (req, res) => {
   const session = await InterviewSession.findById(req.params.sessionId)
     .populate("student", "name email rollNumber")
     .lean();
-  if (!session) return res.status(404).json({ success: false, message: "Session not found" });
-  res.json({ success: true, data: { recordings: session.recordings || [], session } });
+  if (!session)
+    return res
+      .status(404)
+      .json({ success: false, message: "Session not found" });
+  res.json({
+    success: true,
+    data: { recordings: session.recordings || [], session },
+  });
 });
 
-
 module.exports = {
-  createSlot, getAllSlots, getMySlots,
-  startInterview, transcribeAudio,
-  submitVerbalAnswer, submitCodeAnswer, runCode,
-  finishInterview, getResult, getAnalytics,
-  uploadRecording, getRecordings,
+  createSlot,
+  getAllSlots,
+  getMySlots,
+  startInterview,
+  transcribeAudio,
+  submitVerbalAnswer,
+  submitCodeAnswer,
+  runCode,
+  finishInterview,
+  getResult,
+  getAnalytics,
+  uploadRecording,
+  getRecordings,
 };

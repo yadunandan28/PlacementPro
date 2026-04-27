@@ -16,6 +16,9 @@ import PrepareInterviewPage from './pages/PrepareInterviewPage'
 import MockInterviewPage    from './pages/MockInterviewPage'
 import MyInterviewsPage from './pages/MyInterviewsPage'
 import ScheduleInterviewPage from './pages/ScheduleInterviewPage'
+import QuizManagerPage  from './pages/QuizManagerPage'
+import MyQuizzesPage    from './pages/MyQuizzesPage'
+import TakeQuizPage     from './pages/TakeQuizPage'
 
 
 
@@ -82,10 +85,14 @@ export default function App() {
         <Route path="/profile"      element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
         <Route path="/interview/:slotId" element={<StudentRoute><MockInterviewPage /></StudentRoute>} />
         <Route path="/my-interviews" element={<StudentRoute><MyInterviewsPage /></StudentRoute>} />
+        <Route path="/my-quizzes"    element={<StudentRoute><MyQuizzesPage /></StudentRoute>} />
+        <Route path="/quiz/:id/take"  element={<StudentRoute><TakeQuizPage /></StudentRoute>} />
+        <Route path="/quiz/:id/result" element={<StudentRoute><TakeQuizPage /></StudentRoute>} />
 
         {/* Staff-only routes */}
         <Route path="/staff" element={<StaffRoute><StaffDashboard /></StaffRoute>} />
         <Route path="/staff/interviews"  element={<StaffRoute><ScheduleInterviewPage /></StaffRoute>} />
+        <Route path="/staff/quizzes"     element={<StaffRoute><QuizManagerPage /></StaffRoute>} />
 
         <Route path="*" element={<HomeRedirect />} />
       </Routes>
