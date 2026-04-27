@@ -152,18 +152,19 @@ const assignCampaign = asyncHandler(async (req, res) => {
   const campaign = await TrainingCampaign.findOne({
     _id: req.params.id,
     createdBy: req.user._id,
-  }).populate("matchedStudents.student", "name");
+  }).lean();
   if (!campaign)
     return res
       .status(404)
       .json({ success: false, message: "Campaign not found" });
 
+  // Build the list of student ObjectIds to assign
+  const allStudentIds = campaign.matchedStudents.map((m) => String(m.student));
+
   const requestedIds =
     Array.isArray(req.body?.studentIds) && req.body.studentIds.length
       ? req.body.studentIds.map(String)
-      : campaign.matchedStudents.map((m) =>
-          String(m.student?._id || m.student),
-        );
+      : allStudentIds;
 
   if (!requestedIds.length) {
     return res
@@ -171,11 +172,21 @@ const assignCampaign = asyncHandler(async (req, res) => {
       .json({ success: false, message: "No students selected to assign" });
   }
 
+  // Only process students that are actually in matchedStudents
+  const toAssign = requestedIds.filter((id) => allStudentIds.includes(id));
+
+  if (!toAssign.length) {
+    return res
+      .status(400)
+      .json({
+        success: false,
+        message: "None of the selected students are matched to this campaign",
+      });
+  }
+
   let assignedNow = 0;
-  for (const m of campaign.matchedStudents) {
-    const sid = String(m.student?._id || m.student);
-    if (!requestedIds.includes(sid)) continue;
-    await TrainingEnrollment.updateOne(
+  for (const sid of toAssign) {
+    const result = await TrainingEnrollment.updateOne(
       { campaign: campaign._id, student: sid },
       {
         $setOnInsert: {
@@ -207,20 +218,35 @@ const assignCampaign = asyncHandler(async (req, res) => {
       },
       { upsert: true },
     );
-    if (!m.assigned) {
-      m.assigned = true;
-      assignedNow += 1;
-    }
+    // upsertedCount = 1 means a brand-new enrollment was created
+    if (result.upsertedCount > 0) assignedNow += 1;
   }
 
-  campaign.assignedCount = campaign.matchedStudents.filter(
-    (m) => m.assigned,
-  ).length;
-  await campaign.save();
+  // Persist which students are now assigned using a direct DB update
+  await TrainingCampaign.updateOne(
+    { _id: campaign._id },
+    {
+      $set: {
+        "matchedStudents.$[elem].assigned": true,
+      },
+      $inc: { assignedCount: assignedNow },
+    },
+    {
+      arrayFilters: [{ "elem.student": { $in: toAssign } }],
+    },
+  );
+
+  const totalAssigned = await TrainingEnrollment.countDocuments({
+    campaign: campaign._id,
+  });
+
   res.json({
     success: true,
-    message: `Assigned to ${assignedNow} students`,
-    data: { assignedNow, assignedTotal: campaign.assignedCount },
+    message:
+      assignedNow > 0
+        ? `Assigned to ${assignedNow} new student${assignedNow > 1 ? "s" : ""}`
+        : `Already assigned — ${totalAssigned} student${totalAssigned !== 1 ? "s" : ""} enrolled`,
+    data: { assignedNow, assignedTotal: totalAssigned },
   });
 });
 

@@ -6,24 +6,26 @@ import { useAuthStore } from '../../store/authStore'
 import { authAPI } from '../../api'
 import {
   LayoutDashboard, Code2, BookOpen, User,
-  LogOut, BarChart3, ChevronRight, ClipboardList, Bot, Mic, Target
+  LogOut, BarChart3, ChevronRight, ClipboardList, Bot, Mic, Target, FileQuestion
 } from 'lucide-react'
 
 const studentNav = [
-  { to: '/dashboard',      icon: LayoutDashboard, label: 'Dashboard'       },
-  { to: '/modules',        icon: BookOpen,        label: 'Learning Path'   },
-  { to: '/assessments',    icon: ClipboardList,   label: 'Assessments'     },
-  { to: '/practice',       icon: Code2,           label: 'Practice'        },
-  { to: '/prepare-interview', icon: Target,       label: 'Prepare interview', badge: 'AI' },
-  { to: '/chatbot',        icon: Bot,             label: 'JD Analyzer' },
-  { to: '/my-interviews',  icon: Mic,             label: 'Mock Interviews', badge: 'NEW' },
-  { to: '/profile',        icon: User,            label: 'Profile'         },
+  { to: '/dashboard',         icon: LayoutDashboard, label: 'Dashboard'         },
+  { to: '/modules',           icon: BookOpen,        label: 'Learning Path'     },
+  { to: '/assessments',       icon: ClipboardList,   label: 'Assessments'       },
+  { to: '/practice',          icon: Code2,           label: 'Practice'          },
+  { to: '/my-quizzes',        icon: FileQuestion,    label: 'Quizzes',  badge: 'AI' },
+  { to: '/prepare-interview', icon: Target,          label: 'Prepare Interview', badge: 'AI' },
+  { to: '/chatbot',           icon: Bot,             label: 'JD Analyzer'       },
+  { to: '/my-interviews',     icon: Mic,             label: 'Mock Interviews'   },
+  { to: '/profile',           icon: User,            label: 'Profile'           },
 ]
 
 const staffNav = [
-  { to: '/staff',            icon: BarChart3, label: 'Dashboard'       },
-  { to: '/staff/interviews', icon: Mic,       label: 'Mock Interviews' },
-  { to: '/profile',          icon: User,      label: 'Profile'         },
+  { to: '/staff',            icon: BarChart3,    label: 'Dashboard'       },
+  { to: '/staff/quizzes',    icon: FileQuestion, label: 'Quiz Manager', badge: 'AI' },
+  { to: '/staff/interviews', icon: Mic,          label: 'Mock Interviews' },
+  { to: '/profile',          icon: User,         label: 'Profile'         },
 ]
 
 export default function Sidebar() {

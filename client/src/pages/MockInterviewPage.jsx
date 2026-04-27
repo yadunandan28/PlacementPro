@@ -14,7 +14,9 @@ import {
 } from "lucide-react";
 
 // ── Interview-service axios instance ──────────────────────
-const iApi = axios.create({ baseURL: "http://localhost:5001/api" });
+// In Docker/production Nginx proxies /api/interview/ → interview-service:5001
+// In local dev VITE_INTERVIEW_URL can be set to http://localhost:5001/api
+const iApi = axios.create({ baseURL: import.meta.env.VITE_INTERVIEW_URL || "/api" });
 iApi.interceptors.request.use((cfg) => {
   try {
     const raw = localStorage.getItem("placementpro-auth");

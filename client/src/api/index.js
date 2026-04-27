@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
+  baseURL: import.meta.env.VITE_API_URL || "/api",
   withCredentials: true,
 });
 
@@ -117,7 +117,7 @@ api.interceptors.response.use(
       if (!refreshToken) throw new Error("No refresh token");
 
       const { data } = await axios.post(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/auth/refresh`,
+        `${import.meta.env.VITE_API_URL || "/api"}/auth/refresh`,
         { refreshToken },
       );
 
@@ -240,6 +240,29 @@ export const trainingAPI = {
   },
   assignCampaign: (campaignId, studentIds) =>
     api.post(`/training/staff/campaigns/${campaignId}/assign`, { studentIds }),
+};
+
+export const quizAPI = {
+  // Student
+  getMy: () => api.get("/quiz/my"),
+  start: (id) => api.post(`/quiz/${id}/start`),
+  submit: (id, answers) => api.post(`/quiz/${id}/submit`, { answers }),
+  myResult: (id) => api.get(`/quiz/${id}/my-result`),
+
+  // Staff
+  create: (formData) =>
+    api.post("/quiz/staff/create", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+  listStaff: () => api.get("/quiz/staff"),
+  getStaff: (id) => api.get(`/quiz/staff/${id}`),
+  results: (id) => api.get(`/quiz/staff/${id}/results`),
+  schedule: (id, data) => api.patch(`/quiz/staff/${id}/schedule`, data),
+  startManual: (id) => api.patch(`/quiz/staff/${id}/start`),
+  end: (id) => api.patch(`/quiz/staff/${id}/end`),
+  assign: (id, studentIds) =>
+    api.patch(`/quiz/staff/${id}/assign`, { studentIds }),
+  remove: (id) => api.delete(`/quiz/staff/${id}`),
 };
 
 export default api;
